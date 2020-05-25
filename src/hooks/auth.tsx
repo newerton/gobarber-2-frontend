@@ -1,8 +1,15 @@
 import React, { createContext, useCallback, useState, useContext } from 'react';
 import api from '../services/api';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar_url: string;
+}
+
 interface AuthState {
-  user: object;
+  user: User;
   token: string;
 }
 
@@ -18,9 +25,10 @@ interface SignUpCredentials {
 }
 
 interface AuthContextProps {
-  user: object;
+  user: User;
   signIn(credentials: SignInCredentials): Promise<void>;
   signUp(credentials: SignUpCredentials): Promise<void>;
+  updateUser(user: User): void;
   signOut(): void;
 }
 
@@ -32,8 +40,10 @@ export const AuthProvider: React.FC = ({ children }) => {
     const token = localStorage.getItem('@GoBarber:token');
 
     if (user && token) {
+      api.defaults.headers.authorization = `Bearer ${token}`;
       return { user: JSON.parse(user), token };
     }
+
     return {} as AuthState;
   });
 
@@ -44,6 +54,8 @@ export const AuthProvider: React.FC = ({ children }) => {
 
     localStorage.setItem('@GoBarber:user', JSON.stringify(user));
     localStorage.setItem('@GoBarber:token', token);
+
+    api.defaults.headers.authorization = `Bearer ${token}`;
 
     setData({ user, token });
   }, []);
@@ -57,15 +69,31 @@ export const AuthProvider: React.FC = ({ children }) => {
     });
   }, []);
 
+  const updateUser = useCallback(
+    (user: User) => {
+      localStorage.setItem('@GoBarber:user', JSON.stringify(user));
+
+      setData({
+        token: data.token,
+        user,
+      });
+    },
+    [setData, data.token],
+  );
+
   const signOut = useCallback(() => {
     localStorage.removeItem('@GoBarber:user');
     localStorage.removeItem('@GoBarber:token');
+
+    delete api.defaults.headers.authorization;
 
     setData({} as AuthState);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user: data.user, signIn, signUp, signOut }}>
+    <AuthContext.Provider
+      value={{ user: data.user, signIn, signUp, updateUser, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );
