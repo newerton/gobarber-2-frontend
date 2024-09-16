@@ -7,7 +7,7 @@
     "@unform/core": "^2.1.0",
     "@unform/web": "^2.1.0",
     "axios": "^1.1.2",
-    "date-fns": "^3.0.0",
+    "date-fns": "^4.0.0",
     "polished": "^4.1.1",
     "react": "^17.0.2",
     "react-day-picker": "^9.0.5",
